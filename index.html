@@ -1,633 +1,514 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingBag, ChevronLeft, Plus, Minus, X, ArrowRight, Menu } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxora | Timeless Elegance</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (via CDN for zero-build styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-// --- MOCK DATA ---
-const PRODUCTS = [
-  {
-    id: 'p1',
-    name: 'Chronograph Classic',
-    brand: 'Horlogerie',
-    price: 4500,
-    category: 'Watches',
-    description: 'A masterpiece of horology, featuring a precision mechanical movement, sapphire crystal dial, and a hand-stitched alligator leather strap. Water-resistant up to 50 meters.',
-    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800',
-    features: ['Automatic Movement', 'Sapphire Glass', 'Alligator Leather', '42mm Case']
-  },
-  {
-    id: 'p2',
-    name: 'Essence de Nuit',
-    brand: 'Parfumerie',
-    price: 320,
-    category: 'Fragrance',
-    description: 'An intoxicating evening fragrance blending top notes of bergamot with a heart of midnight jasmine and a warm, lingering base of amber and Madagascar vanilla.',
-    image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&q=80&w=800',
-    features: ['50ml / 1.7oz', 'Eau de Parfum', 'Sustainably Sourced', 'Glass Flacon']
-  },
-  {
-    id: 'p3',
-    name: 'The Monaco Tote',
-    brand: 'Maison Cuir',
-    price: 2150,
-    category: 'Leather Goods',
-    description: 'Crafted from full-grain calfskin leather in Italy, the Monaco Tote offers uncompromising elegance and spacious utility. Features custom gold-plated hardware.',
-    image: 'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&q=80&w=800',
-    features: ['Full-Grain Calfskin', 'Gold-Plated Brass', 'Microfiber Lining', 'Interior Zip Pocket']
-  },
-  {
-    id: 'p4',
-    name: 'Diamond Pavé Ring',
-    brand: 'Aura',
-    price: 8900,
-    category: 'Jewelry',
-    description: 'An exquisite 18k white gold band meticulously set with 1.5 carats of VVS1 clarity, D-color diamonds. A timeless symbol of sophistication.',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f66126e28?auto=format&fit=crop&q=80&w=800',
-    features: ['18k White Gold', '1.5ct Total Weight', 'VVS1 Clarity', 'Hand-Set']
-  },
-  {
-    id: 'p5',
-    name: 'Cashmere Overcoat',
-    brand: 'Atelier Sartorial',
-    price: 3400,
-    category: 'Ready-to-Wear',
-    description: 'Woven from 100% pure Mongolian cashmere, this tailored overcoat drapes beautifully, offering unparalleled warmth and a feather-light feel.',
-    image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&q=80&w=800',
-    features: ['100% Cashmere', 'Horn Buttons', 'Silk Lining', 'Made in Italy']
-  },
-  {
-    id: 'p6',
-    name: 'Aviator Sunglasses',
-    brand: 'Lumina',
-    price: 480,
-    category: 'Accessories',
-    description: 'Classic aviator silhouette reimagined with ultra-lightweight titanium frames and polarized lenses providing 100% UV protection and enhanced clarity.',
-    image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&q=80&w=800',
-    features: ['Titanium Frame', 'Polarized Lenses', 'Anti-Reflective', 'Leather Case']
-  }
-];
+    <style>
+        /* Custom Styles & Overrides */
+        :root {
+            --color-text: #0f172a;
+            --color-bg: #ffffff;
+            --color-gray: #f8fafc;
+        }
 
-// --- UTILITIES ---
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0
-  }).format(price);
-};
-
-// --- COMPONENTS ---
-
-const Toast = ({ message, onClose }) => {
-  useEffect(() => {
-    if (!message) return;
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [message, onClose]);
-
-  if (!message) return null;
-
-  return (
-    <div className="fixed bottom-6 right-6 z-50 animate-fade-in-up">
-      <div className="bg-white/90 backdrop-blur-md border border-gray-100 text-slate-900 px-6 py-4 rounded shadow-xl flex items-center gap-4">
-        <span className="font-medium text-sm tracking-wide">{message}</span>
-        <button onClick={onClose} className="text-gray-400 hover:text-slate-900 transition-colors">
-          <X size={16} />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const Header = ({ currentRoute, navigateTo, cartItemCount, onOpenCart }) => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const handleNav = (route) => {
-    navigateTo(route);
-    setMobileMenuOpen(false);
-  };
-
-  return (
-    <header 
-      className={`fixed top-0 w-full z-40 transition-all duration-300 ${
-        isScrolled ? 'bg-white/70 backdrop-blur-lg border-b border-gray-100 shadow-sm py-2' : 'bg-transparent py-4'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        {/* Mobile Menu Toggle */}
-        <button 
-          className="md:hidden text-slate-900"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          <Menu size={24} strokeWidth={1.5} />
-        </button>
-
-        {/* Brand */}
-        <button 
-          onClick={() => handleNav('home')}
-          className="font-serif text-2xl tracking-[0.2em] text-slate-900 hover:opacity-70 transition-opacity uppercase absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
-        >
-          Luxora
-        </button>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          <button 
-            onClick={() => handleNav('home')}
-            className={`text-xs tracking-[0.15em] uppercase transition-colors ${currentRoute === 'home' ? 'text-slate-900 font-semibold' : 'text-gray-500 hover:text-slate-900'}`}
-          >
-            Home
-          </button>
-          <button 
-            onClick={() => handleNav('catalog')}
-            className={`text-xs tracking-[0.15em] uppercase transition-colors ${currentRoute === 'catalog' ? 'text-slate-900 font-semibold' : 'text-gray-500 hover:text-slate-900'}`}
-          >
-            Collections
-          </button>
-        </nav>
-
-        {/* Cart */}
-        <button 
-          onClick={onOpenCart}
-          className="relative flex items-center justify-center p-2 text-slate-900 hover:bg-white/50 rounded-full transition-colors"
-          aria-label="View Cart"
-        >
-          <ShoppingBag size={22} strokeWidth={1.5} />
-          {cartItemCount > 0 && (
-            <span className="absolute top-0 right-0 bg-slate-900 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm">
-              {cartItemCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-lg py-4 px-6 flex flex-col gap-4 animate-fade-in">
-          <button onClick={() => handleNav('home')} className="text-left text-sm tracking-widest uppercase text-slate-900 py-2 border-b border-gray-50">Home</button>
-          <button onClick={() => handleNav('catalog')} className="text-left text-sm tracking-widest uppercase text-slate-900 py-2">Collections</button>
-        </div>
-      )}
-    </header>
-  );
-};
-
-const HomeView = ({ navigateTo }) => (
-  <div className="animate-fade-in pt-20">
-    {/* Hero Section */}
-    <div className="relative h-[80vh] w-full bg-gray-50 overflow-hidden flex items-center justify-center">
-      <img 
-        src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=2000" 
-        alt="Luxury Fashion" 
-        className="absolute inset-0 w-full h-full object-cover object-center opacity-90"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-white/20 to-transparent mix-blend-overlay" />
-      <div className="relative z-10 text-center px-6 max-w-3xl mx-auto mt-20">
-        <h2 className="text-xs md:text-sm tracking-[0.3em] text-slate-800 uppercase mb-4 font-semibold">The New Standard</h2>
-        <h1 className="font-serif text-5xl md:text-7xl text-slate-900 mb-6 drop-shadow-sm">Elevate Your Everyday</h1>
-        <p className="text-gray-700 md:text-lg mb-10 font-light max-w-xl mx-auto">
-          Discover a curated collection of timeless essentials, crafted with uncompromising attention to detail and materials.
-        </p>
-        <button 
-          onClick={() => navigateTo('catalog')}
-          className="bg-slate-900 text-white px-8 py-4 text-xs tracking-[0.2em] uppercase hover:bg-slate-800 hover:shadow-xl transition-all duration-300 flex items-center mx-auto"
-        >
-          Shop the Collection
-          <ArrowRight size={16} className="ml-3" />
-        </button>
-      </div>
-    </div>
-
-    {/* Featured Categories (Visual only for layout structure) */}
-    <div className="max-w-7xl mx-auto px-6 py-24">
-      <div className="text-center mb-16">
-        <h3 className="font-serif text-3xl text-slate-900 mb-3">Curated Signatures</h3>
-        <div className="w-16 h-px bg-slate-300 mx-auto"></div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div 
-          className="relative aspect-square md:aspect-[4/3] bg-gray-100 overflow-hidden group cursor-pointer"
-          onClick={() => navigateTo('catalog')}
-        >
-          <img src="https://images.unsplash.com/photo-1549439602-43ebca2327af?auto=format&fit=crop&q=80&w=800" alt="Accessories" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
-          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500" />
-          <div className="absolute bottom-8 left-8 bg-white/80 backdrop-blur-md px-6 py-3">
-            <span className="text-sm tracking-widest uppercase text-slate-900">Accessories</span>
-          </div>
-        </div>
-        <div 
-          className="relative aspect-square md:aspect-[4/3] bg-gray-100 overflow-hidden group cursor-pointer"
-          onClick={() => navigateTo('catalog')}
-        >
-          <img src="https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?auto=format&fit=crop&q=80&w=800" alt="Ready to Wear" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
-          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500" />
-          <div className="absolute bottom-8 left-8 bg-white/80 backdrop-blur-md px-6 py-3">
-            <span className="text-sm tracking-widest uppercase text-slate-900">Ready-to-Wear</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const ProductCard = ({ product, onViewDetails }) => (
-  <div className="group cursor-pointer flex flex-col" onClick={() => onViewDetails(product)}>
-    <div className="relative aspect-[4/5] overflow-hidden bg-gray-50 mb-6 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-      <img 
-        src={product.image} 
-        alt={product.name} 
-        className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
-        loading="lazy"
-      />
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
-    </div>
-    <div className="text-center flex-1 flex flex-col justify-end">
-      <p className="text-[10px] tracking-[0.2em] text-gray-400 uppercase mb-2">{product.brand}</p>
-      <h3 className="font-serif text-lg text-slate-900 mb-2">{product.name}</h3>
-      <p className="text-sm font-medium text-slate-700">{formatPrice(product.price)}</p>
-    </div>
-  </div>
-);
-
-const CatalogView = ({ onViewDetails }) => (
-  <div className="max-w-7xl mx-auto px-6 py-32 animate-fade-in">
-    <div className="text-center mb-20">
-      <h1 className="font-serif text-4xl md:text-5xl text-slate-900 mb-6">The Collection</h1>
-      <div className="w-12 h-px bg-slate-300 mx-auto mb-6"></div>
-      <p className="text-gray-500 max-w-lg mx-auto text-sm tracking-wide font-light leading-relaxed">
-        Explore our complete catalog of precision-crafted goods, designed for those who appreciate understated luxury.
-      </p>
-    </div>
-
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-20">
-      {PRODUCTS.map(product => (
-        <ProductCard key={product.id} product={product} onViewDetails={onViewDetails} />
-      ))}
-    </div>
-  </div>
-);
-
-const ProductDetailsView = ({ product, onBack, onAddToCart }) => {
-  if (!product) return null;
-
-  return (
-    <div className="max-w-7xl mx-auto px-6 py-32 animate-fade-in">
-      <button 
-        onClick={onBack}
-        className="flex items-center text-xs tracking-[0.15em] text-gray-500 hover:text-slate-900 transition-colors mb-12 group uppercase"
-      >
-        <ChevronLeft size={14} className="mr-1 group-hover:-translate-x-1 transition-transform" />
-        Back to Collection
-      </button>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">
-        {/* Product Image */}
-        <div className="aspect-[4/5] bg-gray-50 rounded-sm overflow-hidden shadow-lg">
-          <img 
-            src={product.image} 
-            alt={product.name} 
-            className="w-full h-full object-cover object-center"
-          />
-        </div>
-
-        {/* Product Info */}
-        <div className="flex flex-col justify-center">
-          <p className="text-xs tracking-[0.25em] text-gray-400 uppercase mb-4">{product.brand}</p>
-          <h1 className="font-serif text-4xl md:text-5xl text-slate-900 mb-6 leading-tight">{product.name}</h1>
-          <p className="text-2xl font-light text-slate-800 mb-10">{formatPrice(product.price)}</p>
-          
-          <div className="prose prose-sm text-gray-600 mb-10 leading-relaxed font-light">
-            <p>{product.description}</p>
-          </div>
-
-          <div className="mb-12">
-            <h3 className="text-xs font-semibold tracking-[0.2em] uppercase text-slate-900 mb-6 border-b border-gray-100 pb-3">Details & Specifications</h3>
-            <ul className="space-y-3">
-              {product.features.map((feature, idx) => (
-                <li key={idx} className="text-sm text-gray-600 flex items-center font-light">
-                  <span className="w-1 h-1 bg-slate-400 rounded-full mr-4"></span>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <button 
-            onClick={() => onAddToCart(product)}
-            className="w-full bg-slate-900 text-white py-5 px-8 tracking-[0.2em] uppercase text-xs hover:bg-slate-800 transition-colors duration-300 shadow-md hover:shadow-xl"
-          >
-            Add to Cart
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const CartDrawer = ({ isOpen, onClose, cart, onUpdateQuantity, onRemove, onCheckout }) => {
-  const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const shipping = subtotal > 0 ? 50 : 0; 
-  const total = subtotal + shipping;
-
-  return (
-    <div className={`fixed inset-0 z-50 transition-opacity duration-500 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-      {/* Soft Glass Backdrop */}
-      <div 
-        className="absolute inset-0 bg-slate-900/10 backdrop-blur-sm transition-opacity" 
-        onClick={onClose}
-      />
-      
-      {/* Drawer */}
-      <div className={`absolute top-0 right-0 h-full w-full max-w-md bg-white/90 backdrop-blur-xl border-l border-gray-100 shadow-2xl transition-transform duration-500 ease-out transform ${isOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-8 border-b border-gray-100/50">
-          <h2 className="font-serif text-2xl text-slate-900">Your Selection</h2>
-          <button 
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-slate-900 hover:bg-black/5 rounded-full transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-2">
-                <ShoppingBag size={32} className="text-gray-300" strokeWidth={1} />
-              </div>
-              <p className="text-gray-500 font-light">Your cart is currently empty.</p>
-              <button 
-                onClick={onClose}
-                className="text-xs tracking-[0.2em] uppercase text-slate-900 font-medium hover:text-slate-600 transition-colors border-b border-slate-900 pb-1"
-              >
-                Continue Shopping
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {cart.map((item) => (
-                <div key={item.product.id} className="flex gap-6 group">
-                  <div className="w-24 h-32 flex-shrink-0 bg-gray-50 rounded-sm overflow-hidden border border-gray-100 shadow-sm">
-                    <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
-                  </div>
-                  
-                  <div className="flex-1 flex flex-col justify-center py-1">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-serif text-base text-slate-900 pr-4">{item.product.name}</h3>
-                      <button 
-                        onClick={() => onRemove(item.product.id)}
-                        className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                        aria-label="Remove item"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                    <p className="text-[10px] tracking-[0.2em] text-gray-400 uppercase mb-4">{item.product.brand}</p>
-                    
-                    <div className="flex items-center justify-between mt-auto">
-                      <div className="flex items-center border border-gray-200 rounded-sm bg-white/50">
-                        <button 
-                          onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
-                          className="px-3 py-1.5 text-gray-500 hover:bg-gray-100 transition-colors"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="w-8 text-center text-xs font-medium text-slate-900">{item.quantity}</span>
-                        <button 
-                          onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
-                          className="px-3 py-1.5 text-gray-500 hover:bg-gray-100 transition-colors"
-                        >
-                          <Plus size={12} />
-                        </button>
-                      </div>
-                      <p className="text-sm font-medium text-slate-900">{formatPrice(item.product.price * item.quantity)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        {cart.length > 0 && (
-          <div className="p-8 border-t border-gray-100/50 bg-white/50 backdrop-blur-md">
-            <div className="space-y-4 text-sm mb-6 font-light">
-              <div className="flex justify-between text-gray-600">
-                <span>Subtotal</span>
-                <span>{formatPrice(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Estimated Shipping</span>
-                <span>{formatPrice(shipping)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-medium text-slate-900 pt-4 border-t border-gray-200">
-                <span>Total</span>
-                <span>{formatPrice(total)}</span>
-              </div>
-            </div>
-            <button 
-              onClick={onCheckout}
-              className="w-full bg-slate-900 text-white py-5 tracking-[0.2em] uppercase text-xs hover:bg-slate-800 transition-colors duration-300 shadow-lg hover:shadow-xl"
-            >
-              Proceed to Checkout
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// --- MAIN APP COMPONENT ---
-
-export default function App() {
-  const [currentRoute, setCurrentRoute] = useState('home'); // 'home', 'catalog', 'details'
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [toastMessage, setToastMessage] = useState(null);
-
-  // Scroll to top on route change
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentRoute]);
-
-  const handleNavigate = (route, product = null) => {
-    setCurrentRoute(route);
-    if (product) setSelectedProduct(product);
-  };
-
-  const handleAddToCart = (product) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.product.id === product.id);
-      if (existingItem) {
-        return prevCart.map(item => 
-          item.product.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prevCart, { product, quantity: 1 }];
-    });
-    setToastMessage(`${product.name} added to your selection.`);
-    setIsCartOpen(true);
-  };
-
-  const handleUpdateQuantity = (productId, newQuantity) => {
-    if (newQuantity < 1) return;
-    setCart(prevCart => 
-      prevCart.map(item => 
-        item.product.id === productId ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const handleRemoveFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item.product.id !== productId));
-  };
-
-  const handleCheckout = () => {
-    setToastMessage('Redirecting to secure checkout...');
-    setTimeout(() => setIsCartOpen(false), 1500);
-  };
-
-  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  return (
-    <div className="min-h-screen flex flex-col bg-white text-slate-900 font-sans selection:bg-slate-200 selection:text-slate-900">
-      <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
-        
         body {
-          font-family: 'Inter', sans-serif;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
-        
+
         .font-serif {
-          font-family: 'Playfair Display', serif;
+            font-family: 'Playfair Display', serif;
         }
 
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fade-in-up {
-          animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        /* Glassmorphism Utilities */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
         }
 
+        .glass-drawer {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Animations */
         @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .animate-fade-in {
-          animation: fadeIn 0.6s ease-out forwards;
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        /* Cart Drawer Transitions */
+        #cart-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        #cart-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #cart-drawer {
+            transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #cart-drawer.open {
+            transform: translateX(0);
+        }
+
+        /* Toast Notifications */
+        #toast {
+            transform: translateY(100%);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+            width: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
+            background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 4px;
+            background: #cbd5e1;
+            border-radius: 4px;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #cbd5e1;
+        
+        .nav-link {
+            transition: all 0.3s ease;
+            position: relative;
         }
-      `}} />
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -2px;
+            left: 0;
+            background-color: #0f172a;
+            transition: width 0.3s ease;
+        }
+        .nav-link.active::after, .nav-link:hover::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
 
-      <Header 
-        currentRoute={currentRoute}
-        navigateTo={handleNavigate} 
-        cartItemCount={cartItemCount} 
-        onOpenCart={() => setIsCartOpen(true)}
-      />
+    <!-- Header Navigation -->
+    <header id="main-header" class="fixed top-0 w-full z-40 transition-all duration-300 py-4">
+        <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+            <!-- Mobile Menu Icon -->
+            <button class="md:hidden text-slate-900" onclick="toggleMobileMenu()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
 
-      <main className="flex-grow">
-        {currentRoute === 'home' && (
-          <HomeView navigateTo={handleNavigate} />
-        )}
-        
-        {currentRoute === 'catalog' && (
-          <CatalogView onViewDetails={(p) => handleNavigate('details', p)} />
-        )}
-        
-        {currentRoute === 'details' && (
-          <ProductDetailsView 
-            product={selectedProduct} 
-            onBack={() => handleNavigate('catalog')}
-            onAddToCart={handleAddToCart}
-          />
-        )}
-      </main>
+            <!-- Brand -->
+            <button onclick="navigate('home')" class="font-serif text-2xl tracking-[0.2em] text-slate-900 uppercase absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
+                Luxora
+            </button>
 
-      <CartDrawer 
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cart={cart}
-        onUpdateQuantity={handleUpdateQuantity}
-        onRemove={handleRemoveFromCart}
-        onCheckout={handleCheckout}
-      />
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+                <button onclick="navigate('home')" id="nav-home" class="nav-link active text-xs tracking-[0.15em] uppercase text-slate-900">Home</button>
+                <button onclick="navigate('catalog')" id="nav-catalog" class="nav-link text-xs tracking-[0.15em] uppercase text-gray-500">Collections</button>
+            </nav>
 
-      <footer className="bg-white border-t border-gray-100 py-16 mt-auto">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 text-center md:text-left">
-          <div className="md:col-span-4">
-            <h4 className="font-serif text-2xl text-slate-900 mb-6 uppercase tracking-[0.2em]">Luxora</h4>
-            <p className="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto md:mx-0 font-light">
-              Curating uncompromising elegance and timeless design for the modern connoisseur.
-            </p>
-          </div>
-          <div className="md:col-span-4 md:pl-12">
-            <h4 className="text-[10px] font-semibold tracking-[0.2em] text-slate-900 uppercase mb-6">Client Services</h4>
-            <ul className="space-y-4 text-sm text-gray-500 font-light">
-              <li><button className="hover:text-slate-900 transition-colors">Contact Us</button></li>
-              <li><button className="hover:text-slate-900 transition-colors">Shipping & Returns</button></li>
-              <li><button className="hover:text-slate-900 transition-colors">Care Guide</button></li>
-              <li><button className="hover:text-slate-900 transition-colors">FAQ</button></li>
-            </ul>
-          </div>
-          <div className="md:col-span-4">
-            <h4 className="text-[10px] font-semibold tracking-[0.2em] text-slate-900 uppercase mb-6">Private Newsletter</h4>
-            <p className="text-sm text-gray-500 mb-6 font-light">Subscribe to receive early access to new collections and exclusive events.</p>
-            <div className="flex border-b border-gray-300 focus-within:border-slate-900 transition-colors pb-2">
-              <input 
-                type="email" 
-                placeholder="Email Address" 
-                className="bg-transparent border-none outline-none w-full text-sm text-slate-900 placeholder-gray-400 font-light"
-              />
-              <button className="text-[10px] font-semibold tracking-[0.15em] uppercase hover:text-slate-500 transition-colors">
-                Join
-              </button>
+            <!-- Cart Icon -->
+            <button onclick="toggleCart()" class="relative flex items-center justify-center p-2 text-slate-900 rounded-full hover:bg-black/5 transition-colors">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                <span id="cart-badge" class="absolute top-0 right-0 bg-slate-900 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-sm hidden">0</span>
+            </button>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-lg py-4 px-6 flex flex-col gap-4">
+            <button onclick="navigate('home'); toggleMobileMenu()" class="text-left text-sm tracking-widest uppercase text-slate-900 py-2 border-b border-gray-50">Home</button>
+            <button onclick="navigate('catalog'); toggleMobileMenu()" class="text-left text-sm tracking-widest uppercase text-slate-900 py-2">Collections</button>
+        </div>
+    </header>
+
+    <!-- Main Content Area (Router Outlet) -->
+    <main id="app-root" class="flex-grow w-full">
+        <!-- Views injected here by JS -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-100 py-16 mt-auto">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 text-center md:text-left">
+            <div class="md:col-span-4">
+                <h4 class="font-serif text-2xl text-slate-900 mb-6 uppercase tracking-[0.2em]">Luxora</h4>
+                <p class="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto md:mx-0 font-light">Curating uncompromising elegance and timeless design for the modern connoisseur.</p>
             </div>
-          </div>
+            <div class="md:col-span-4 md:pl-12">
+                <h4 class="text-[10px] font-semibold tracking-[0.2em] text-slate-900 uppercase mb-6">Client Services</h4>
+                <ul class="space-y-4 text-sm text-gray-500 font-light">
+                    <li><a href="#" class="hover:text-slate-900 transition-colors">Contact Us</a></li>
+                    <li><a href="#" class="hover:text-slate-900 transition-colors">Shipping & Returns</a></li>
+                    <li><a href="#" class="hover:text-slate-900 transition-colors">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="md:col-span-4">
+                <h4 class="text-[10px] font-semibold tracking-[0.2em] text-slate-900 uppercase mb-6">Private Newsletter</h4>
+                <div class="flex border-b border-gray-300 focus-within:border-slate-900 transition-colors pb-2">
+                    <input type="email" placeholder="Email Address" class="bg-transparent border-none outline-none w-full text-sm text-slate-900 placeholder-gray-400 font-light">
+                    <button class="text-[10px] font-semibold tracking-[0.15em] uppercase hover:text-slate-500 transition-colors">Join</button>
+                </div>
+            </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-50 flex flex-col md:flex-row items-center justify-between text-xs text-gray-400 font-light">
-          <p>&copy; {new Date().getFullYear()} Luxora. All rights reserved.</p>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            <button className="hover:text-slate-900 transition-colors">Privacy Policy</button>
-            <button className="hover:text-slate-900 transition-colors">Terms of Service</button>
-          </div>
+        <div class="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-50 flex flex-col md:flex-row items-center justify-between text-xs text-gray-400 font-light">
+            <p>&copy; 2026 Luxora. All rights reserved.</p>
         </div>
-      </footer>
+    </footer>
 
-      <Toast 
-        message={toastMessage} 
-        onClose={() => setToastMessage(null)} 
-      />
+    <!-- Cart Drawer -->
+    <div id="cart-overlay" class="fixed inset-0 z-50 bg-slate-900/10 backdrop-blur-sm" onclick="toggleCart()"></div>
+    
+    <div id="cart-drawer" class="fixed top-0 right-0 h-full w-full max-w-md glass-drawer border-l border-gray-100 shadow-2xl z-50 flex flex-col">
+        <div class="flex items-center justify-between p-8 border-b border-gray-100/50">
+            <h2 class="font-serif text-2xl text-slate-900">Your Selection</h2>
+            <button onclick="toggleCart()" class="p-2 text-gray-400 hover:text-slate-900 hover:bg-black/5 rounded-full transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-8">
+            <!-- Cart items injected here -->
+        </div>
+
+        <div id="cart-footer" class="p-8 border-t border-gray-100/50 bg-white/50 backdrop-blur-md hidden">
+            <div class="space-y-4 text-sm mb-6 font-light">
+                <div class="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">$0.00</span>
+                </div>
+                <div class="flex justify-between text-lg font-medium text-slate-900 pt-4 border-t border-gray-200">
+                    <span>Total</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+            </div>
+            <button onclick="checkout()" class="w-full bg-slate-900 text-white py-5 tracking-[0.2em] uppercase text-xs hover:bg-slate-800 transition-colors shadow-lg">
+                Proceed to Checkout
+            </button>
+        </div>
     </div>
-  );
-}
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 glass-drawer border border-gray-100 text-slate-900 px-6 py-4 rounded shadow-xl flex items-center gap-4">
+        <span id="toast-message" class="font-medium text-sm tracking-wide"></span>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- DATA ---
+        const PRODUCTS = [
+            {
+                id: 'p1', name: 'Chronograph Classic', brand: 'Horlogerie', price: 4500,
+                image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800',
+                description: 'A masterpiece of horology, featuring a precision mechanical movement, sapphire crystal dial, and a hand-stitched alligator leather strap.',
+                features: ['Automatic Movement', 'Sapphire Glass', 'Alligator Leather', '42mm Case']
+            },
+            {
+                id: 'p2', name: 'Essence de Nuit', brand: 'Parfumerie', price: 320,
+                image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&q=80&w=800',
+                description: 'An intoxicating evening fragrance blending top notes of bergamot with a heart of midnight jasmine and a warm, lingering base of amber.',
+                features: ['50ml / 1.7oz', 'Eau de Parfum', 'Glass Flacon']
+            },
+            {
+                id: 'p3', name: 'The Monaco Tote', brand: 'Maison Cuir', price: 2150,
+                image: 'https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&q=80&w=800',
+                description: 'Crafted from full-grain calfskin leather in Italy, the Monaco Tote offers uncompromising elegance and spacious utility.',
+                features: ['Full-Grain Calfskin', 'Gold-Plated Brass', 'Microfiber Lining']
+            },
+            {
+                id: 'p4', name: 'Diamond Pavé Ring', brand: 'Aura', price: 8900,
+                image: 'https://images.unsplash.com/photo-1605100804763-247f66126e28?auto=format&fit=crop&q=80&w=800',
+                description: 'An exquisite 18k white gold band meticulously set with 1.5 carats of VVS1 clarity, D-color diamonds.',
+                features: ['18k White Gold', '1.5ct Total Weight', 'Hand-Set']
+            },
+            {
+                id: 'p5', name: 'Cashmere Overcoat', brand: 'Atelier Sartorial', price: 3400,
+                image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&q=80&w=800',
+                description: 'Woven from 100% pure Mongolian cashmere, this tailored overcoat drapes beautifully, offering unparalleled warmth.',
+                features: ['100% Cashmere', 'Horn Buttons', 'Silk Lining']
+            },
+            {
+                id: 'p6', name: 'Aviator Sunglasses', brand: 'Lumina', price: 480,
+                image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&q=80&w=800',
+                description: 'Classic aviator silhouette reimagined with ultra-lightweight titanium frames and polarized lenses.',
+                features: ['Titanium Frame', 'Polarized Lenses', 'Leather Case']
+            }
+        ];
+
+        // --- STATE ---
+        let cart = [];
+        let isMenuOpen = false;
+
+        // --- UTILS ---
+        const formatPrice = (price) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(price);
+
+        const showToast = (message) => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        };
+
+        // --- ROUTER & RENDER LOGIC ---
+        const appRoot = document.getElementById('app-root');
+
+        const navigate = (route, productId = null) => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Update Active Nav Links
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active', 'text-slate-900'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.add('text-gray-500'));
+            const activeLink = document.getElementById(`nav-${route}`);
+            if(activeLink) {
+                activeLink.classList.remove('text-gray-500');
+                activeLink.classList.add('active', 'text-slate-900');
+            }
+
+            if (route === 'home') renderHome();
+            else if (route === 'catalog') renderCatalog();
+            else if (route === 'details' && productId) renderDetails(productId);
+        };
+
+        const renderHome = () => {
+            appRoot.innerHTML = `
+                <div class="animate-fade-in pt-20">
+                    <div class="relative h-[80vh] w-full bg-gray-50 overflow-hidden flex items-center justify-center">
+                        <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=2000" alt="Luxury" class="absolute inset-0 w-full h-full object-cover object-center opacity-90">
+                        <div class="absolute inset-0 bg-gradient-to-t from-white/80 via-white/20 to-transparent mix-blend-overlay"></div>
+                        <div class="relative z-10 text-center px-6 max-w-3xl mx-auto mt-20">
+                            <h2 class="text-xs md:text-sm tracking-[0.3em] text-slate-800 uppercase mb-4 font-semibold">The New Standard</h2>
+                            <h1 class="font-serif text-5xl md:text-7xl text-slate-900 mb-6 drop-shadow-sm">Elevate Your Everyday</h1>
+                            <p class="text-gray-700 md:text-lg mb-10 font-light max-w-xl mx-auto">Discover a curated collection of timeless essentials, crafted with uncompromising attention to detail.</p>
+                            <button onclick="navigate('catalog')" class="bg-slate-900 text-white px-8 py-4 text-xs tracking-[0.2em] uppercase hover:bg-slate-800 transition-all duration-300 flex items-center mx-auto shadow-lg hover:shadow-xl">
+                                Shop the Collection
+                                <svg class="ml-3" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderCatalog = () => {
+            let gridHTML = PRODUCTS.map(product => `
+                <div class="group cursor-pointer flex flex-col" onclick="navigate('details', '${product.id}')">
+                    <div class="relative aspect-[4/5] overflow-hidden bg-gray-50 mb-6 rounded-sm shadow-sm">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105" loading="lazy">
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300"></div>
+                    </div>
+                    <div class="text-center flex-1 flex flex-col justify-end">
+                        <p class="text-[10px] tracking-[0.2em] text-gray-400 uppercase mb-2">${product.brand}</p>
+                        <h3 class="font-serif text-lg text-slate-900 mb-2">${product.name}</h3>
+                        <p class="text-sm font-medium text-slate-700">${formatPrice(product.price)}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            appRoot.innerHTML = `
+                <div class="max-w-7xl mx-auto px-6 py-32 animate-fade-in">
+                    <div class="text-center mb-20">
+                        <h1 class="font-serif text-4xl md:text-5xl text-slate-900 mb-6">The Collection</h1>
+                        <div class="w-12 h-px bg-slate-300 mx-auto mb-6"></div>
+                        <p class="text-gray-500 max-w-lg mx-auto text-sm tracking-wide font-light leading-relaxed">Explore our complete catalog of precision-crafted goods, designed for those who appreciate understated luxury.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-20">
+                        ${gridHTML}
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderDetails = (productId) => {
+            const product = PRODUCTS.find(p => p.id === productId);
+            if(!product) return;
+
+            let featuresHTML = product.features.map(f => `
+                <li class="text-sm text-gray-600 flex items-center font-light">
+                    <span class="w-1 h-1 bg-slate-400 rounded-full mr-4"></span>${f}
+                </li>
+            `).join('');
+
+            appRoot.innerHTML = `
+                <div class="max-w-7xl mx-auto px-6 py-32 animate-fade-in">
+                    <button onclick="navigate('catalog')" class="flex items-center text-xs tracking-[0.15em] text-gray-500 hover:text-slate-900 transition-colors mb-12 uppercase group">
+                        <svg class="mr-2 group-hover:-translate-x-1 transition-transform" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Back to Collection
+                    </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">
+                        <div class="aspect-[4/5] bg-gray-50 rounded-sm overflow-hidden shadow-lg">
+                            <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover object-center">
+                        </div>
+                        <div class="flex flex-col justify-center">
+                            <p class="text-xs tracking-[0.25em] text-gray-400 uppercase mb-4">${product.brand}</p>
+                            <h1 class="font-serif text-4xl md:text-5xl text-slate-900 mb-6 leading-tight">${product.name}</h1>
+                            <p class="text-2xl font-light text-slate-800 mb-10">${formatPrice(product.price)}</p>
+                            <p class="text-sm text-gray-600 mb-10 leading-relaxed font-light">${product.description}</p>
+                            <div class="mb-12">
+                                <h3 class="text-xs font-semibold tracking-[0.2em] uppercase text-slate-900 mb-6 border-b border-gray-100 pb-3">Details & Specs</h3>
+                                <ul class="space-y-3">${featuresHTML}</ul>
+                            </div>
+                            <button onclick="addToCart('${product.id}')" class="w-full bg-slate-900 text-white py-5 px-8 tracking-[0.2em] uppercase text-xs hover:bg-slate-800 transition-colors shadow-md hover:shadow-xl">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        // --- CART LOGIC ---
+        const toggleCart = () => {
+            const drawer = document.getElementById('cart-drawer');
+            const overlay = document.getElementById('cart-overlay');
+            drawer.classList.toggle('open');
+            overlay.classList.toggle('open');
+            renderCartItems();
+        };
+
+        const addToCart = (productId) => {
+            const product = PRODUCTS.find(p => p.id === productId);
+            const existing = cart.find(item => item.product.id === productId);
+            if (existing) {
+                existing.quantity++;
+            } else {
+                cart.push({ product, quantity: 1 });
+            }
+            showToast(`${product.name} added to selection.`);
+            updateCartBadge();
+            toggleCart();
+        };
+
+        const updateQuantity = (productId, delta) => {
+            const item = cart.find(i => i.product.id === productId);
+            if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) {
+                    cart = cart.filter(i => i.product.id !== productId);
+                }
+            }
+            updateCartBadge();
+            renderCartItems();
+        };
+
+        const renderCartItems = () => {
+            const container = document.getElementById('cart-items-container');
+            const footer = document.getElementById('cart-footer');
+            
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center space-y-6">
+                        <p class="text-gray-400 font-light">Your selection is empty.</p>
+                        <button onclick="toggleCart(); navigate('catalog')" class="text-xs tracking-[0.2em] uppercase text-slate-900 font-medium hover:text-slate-600 border-b border-slate-900 pb-1">Explore Collection</button>
+                    </div>
+                `;
+                footer.classList.add('hidden');
+                return;
+            }
+
+            footer.classList.remove('hidden');
+            let total = 0;
+
+            container.innerHTML = cart.map(item => {
+                total += item.product.price * item.quantity;
+                return `
+                <div class="flex gap-6 group">
+                    <div class="w-24 h-32 flex-shrink-0 bg-gray-50 rounded-sm overflow-hidden border border-gray-100 shadow-sm">
+                        <img src="${item.product.image}" alt="${item.product.name}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 flex flex-col justify-center py-1">
+                        <div class="flex justify-between items-start mb-1">
+                            <h3 class="font-serif text-base text-slate-900 pr-4">${item.product.name}</h3>
+                        </div>
+                        <p class="text-[10px] tracking-[0.2em] text-gray-400 uppercase mb-4">${item.product.brand}</p>
+                        <div class="flex items-center justify-between mt-auto">
+                            <div class="flex items-center border border-gray-200 rounded-sm bg-white/50">
+                                <button onclick="updateQuantity('${item.product.id}', -1)" class="px-3 py-1 text-gray-500 hover:bg-gray-100">-</button>
+                                <span class="w-8 text-center text-xs font-medium">${item.quantity}</span>
+                                <button onclick="updateQuantity('${item.product.id}', 1)" class="px-3 py-1 text-gray-500 hover:bg-gray-100">+</button>
+                            </div>
+                            <p class="text-sm font-medium text-slate-900">${formatPrice(item.product.price * item.quantity)}</p>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+
+            document.getElementById('cart-subtotal').innerText = formatPrice(total);
+            document.getElementById('cart-total').innerText = formatPrice(total);
+        };
+
+        const updateCartBadge = () => {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const badge = document.getElementById('cart-badge');
+            if (count > 0) {
+                badge.innerText = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        };
+
+        const checkout = () => {
+            showToast('Redirecting to secure checkout...');
+            setTimeout(() => { toggleCart(); }, 1500);
+        };
+
+        // --- HEADER SCROLL LOGIC ---
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 20) {
+                header.classList.add('glass-header');
+                header.classList.remove('py-4');
+                header.classList.add('py-2');
+            } else {
+                header.classList.remove('glass-header');
+                header.classList.add('py-4');
+                header.classList.remove('py-2');
+            }
+        });
+
+        const toggleMobileMenu = () => {
+            const menu = document.getElementById('mobile-menu');
+            isMenuOpen = !isMenuOpen;
+            if(isMenuOpen) {
+                menu.classList.remove('hidden');
+            } else {
+                menu.classList.add('hidden');
+            }
+        };
+
+        // --- INIT ---
+        navigate('home');
+
+    </script>
+</body>
+</html>
